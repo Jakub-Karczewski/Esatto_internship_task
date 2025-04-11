@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather poem with sightseeing guide</title>
+
+<script type="module">
+    import markdownIt from 'https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/+esm'
+</script>
+
+<script defer>
+    let last_listed = 0;
+    let limit = 10;
+    let sort_by = "temp_min";
+    let sort_type = 1;
+    async function list_all(){
+        let res_ = document.getElementById("result");
+        res_.innerHTML = "";
+        let response = await fetch(`http://127.0.0.1:8000/all_entities/${last_listed}/${limit}/${sort_by}/${sort_type}`);
+        let arr = (await response.json())['elements'];
+        let keys = ["start_date", "end_date", "name", "temp_min", "temp_max", "temp_avg", "country_name", "town_name"]
+        let tab = "<table>\n" +
+            "<thead>\n" +
+            "<tr>\n";
+        for (let i = 0; i < keys.length; i++) {
+            tab += `<th>${keys[i]}</th>\n`;
+        }
+        tab += "</tr>" +
+            "</thead>" +
+            "<tbody>";
+        for (let i = 0; i < arr.length; i++){
+            tab += "<tr>";
+            for (let j = 0; j < keys.length; j++){
+                tab += `<th>${arr[i][keys[j]]}</th>`
+            }
+            tab += "</tr>";
+        }
+        tab += "</tbody>" + "</table>";
+        res_.innerHTML = tab;
+        last_listed += limit;
+    }
+    async function add(){
+        let res_ = document.getElementById("result");
+        let mess = "";
+        mess += "<h1>"
+        res_.innerHTML = "";
+        let body_ = { start_date: document.getElementById("start").value,
+                name: "",
+                end_date: document.getElementById("end").value,
+                temp_min: 0.0,
+                temp_max: 0.0,
+                temp_avg: 0.0,
+                country_name: document.getElementById("country").value,
+                town_name: document.getElementById("city").value
+        }
+        console.log(body_);
+
+        let response = await fetch(`http://127.0.0.1:8000/entities/`, {
+            method: "POST", body: JSON.stringify(body_)
+        });
+        if (response.status >= 400){
+            mess += "Nie udalo sie :(((\n";
+        }
+        else{
+            mess += "Udalo sie :)\n";
+        }
+        mess += "</h1>"
+        res_.innerHTML = mess;
+    }
+
+    async function delet(){
+        let res_ = document.getElementById("result");
+        let name_ = document.getElementById("name").value
+        let mess = "";
+        mess += "<h1>"
+        let response = await fetch(`http://127.0.0.1:8000/entities/${name_}`, { method: "DELETE" });
+        if (response.status >= 400){
+            mess += "Nie udalo sie :(((\n";
+        }
+        else{
+            mess += "Udalo sie :)\n";
+        }
+        mess += "</h1>"
+        res_.innerHTML = mess;
+    }
+    async function edit(){
+        let res_ = document.getElementById("result");
+        let mess = "";
+        mess += "<h1>"
+        res_.innerHTML = "";
+        let name_ = document.getElementById("name").value;
+        let body_ = { start_date: document.getElementById("start").value,
+                name: name_,
+                end_date: document.getElementById("end").value,
+                temp_min: 21.0,
+                temp_max: 25.0,
+                temp_avg: 23.5,
+                country_name: document.getElementById("country").value,
+                town_name: document.getElementById("city").value
+        }
+        console.log(body_);
+
+        let response = await fetch(`http://127.0.0.1:8000/entities/${name_}`,
+            { method: "PUT", body: JSON.stringify(body_) });
+
+        if (response.status >= 400){
+            mess += "Nie udalo sie :(((\n";
+        }
+        else{
+            mess += "Udalo sie :)\n";
+        }
+        mess += "</h1>"
+        res_.innerHTML = mess;
+    }
+
+</script>
+</head>
+<body>
+<h1>
+    Give me the properties
+</h1>
+    <form>
+        <input type="button" value="LIST" onclick="list_all()"> <br> <br>
+        <input type="button" value="ADD" onclick="add()"> <br> <br>
+        <input type="button" value="DELETE" onclick="delet()"> <br> <br>
+        <input type="button" value="CHANGE/EDIT" onclick="edit()"> <br> <br>
+    </form>
+<h2>
+        <label for="name">Give the name to delete:</label><br>
+        <input type="text" id="name" name="to_delete"><br>
+        <label for="country">Give the name of a country:</label><br>
+        <input type="text" id="country" name="country"><br>
+        <label for="city">Give the name of a city:</label><br>
+        <input type="text" id="city" name="city"> <br> <br>
+        <label for="start">Start date:</label>
+        <input type="date"  id="start" name="start_date" value="2018-07-22"  min="2010-01-01" max="2025-04-18" />
+        <label for="start">Start date:</label>
+        <label for="end"></label>
+        <input type="date" id="end" name="end_date" value="2018-07-23" min="2010-01-01" max="2025-04-18" />
+</h2>
+<div id = "result">
+
+</div>
+
+</body>
+</html>
